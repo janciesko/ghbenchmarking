@@ -152,17 +152,6 @@ int run_benchmark(const GUPSIndex indicesCount, const GUPSIndex dataCount,
   Kokkos::deep_copy(indices, dev_indices);
   Kokkos::deep_copy(data, dev_data);
 
-//  printf(HLINE);
-//    printf("- Elements:      %15" PRIu64 " (%12.4f MB)\n",
-//         static_cast<uint64_t>(dataCount),
-//         1.0e-6 * ((double)dataCount * (double)sizeof(int64_t)));
-//  printf("- Indices:       %15" PRIu64 " (%12.4f MB)\n",
-//         static_cast<uint64_t>(indicesCount),
-//         1.0e-6 * ((double)indicesCount * (double)sizeof(int64_t)));
-//  printf(" - Atomics:      %15s\n", (useAtomics ? "Yes" : "No"));
-//  printf("Benchmark kernels will be performed for %d iterations.\n", repeats);
-//
-  // datacount, datasize, idxcount, idxsize, gups
   printf("Hopper,%lu,%lu,%lu,%lu,%.5f,%lu,%.5f,%s,%.10f\n",
       num_teams,
       team_size,

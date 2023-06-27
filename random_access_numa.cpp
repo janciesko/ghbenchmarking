@@ -22,12 +22,14 @@
 #include <sys/time.h>
 
 #if defined(KOKKOS_ENABLE_CUDA)
-//using DefaultExecSpace = Kokkos::DefaultExecutionSpace;
-using DefaultExecSpace = Kokkos::DefaultHostExecutionSpace;
-using GUPSHostArray   = Kokkos::View<int64_t*, DefaultExecSpace>::HostMirror;
+using DefaultExecSpace = Kokkos::DefaultExecutionSpace;
+//using DefaultExecSpace = Kokkos::DefaultHostExecutionSpace;
+using GUPSHostArray   =Kokkos::View<int64_t*, Kokkos::HostSpace>::HostMirror;
+using GUPSHostArrayUmnged   =Kokkos::View<int64_t*, Kokkos::HostSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>>; //Kokkos::View<int64_t*, Kokkos::HostSpace>::HostMirror;
 using GUPSDeviceArray = Kokkos::View<int64_t*, DefaultExecSpace>;
+using GUPSDeviceArrayUmnged = Kokkos::View<int64_t*, DefaultExecSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 #else
-using GUPSHostArray   = Kokkos::View<int64_t*, Kokkos::HostSpace>::HostMirror;
+using GUPSHostArrayUmnged   =Kokkos::View<int64_t*, Kokkos::HostSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>>; //Kokkos::View<int64_t*, Kokkos::HostSpace>::HostMirror;
 using GUPSDeviceArray = Kokkos::View<int64_t*, Kokkos::HostSpace>;
 #endif
 
@@ -47,7 +49,7 @@ void randomize_indices(GUPSHostArray& indices, GUPSDeviceArray& dev_indices,
   Kokkos::deep_copy(dev_indices, indices);
 }
 
-void run_gups(GUPSDeviceArray& indices, GUPSDeviceArray& data,
+void run_gups(GUPSDeviceArray& indices, GUPSDeviceArrayUmnged& data,
               const int64_t datum, const bool performAtomics, const int64_t num_teams,  const int64_t team_size, const int64_t vec_len) {
 
   auto policy =
@@ -110,23 +112,29 @@ int run_benchmark(const GUPSIndex indicesCount, const GUPSIndex dataCount,
 
 
   GUPSDeviceArray dev_indices("indices", indicesCount);
-  GUPSDeviceArray dev_data("data", dataCount);
+  //GUPSDeviceArray dev_data("data", dataCount);
+  int64_t * dev_data_ptr = (int64_t *) malloc (dataCount * sizeof(int64_t));
+  if (dev_data_ptr == nullptr)
+    printf("ERROR\n"); 
+  
+  GUPSDeviceArrayUmnged dev_data(dev_data_ptr);
+
   int64_t datum = -1;
 
   GUPSHostArray indices = Kokkos::create_mirror_view(dev_indices);
-  GUPSHostArray data    = Kokkos::create_mirror_view(dev_data);
+  GUPSHostArrayUmnged data (dev_data_ptr);
 
   double gupsTime = 0.0;
 
 //  printf("Initializing Views...\n");
 
-#if defined(KOKKOS_HAVE_OPENMP)
-  Kokkos::parallel_for(
-      "init-data", Kokkos::RangePolicy<Kokkos::OpenMP>(0, dataCount),
-#else
+//#if defined(KOKKOS_HAVE_OPENMP)
+  //Kokkos::parallel_for(
+      //"init-data", Kokkos::RangePolicy<Kokkos::OpenMP>(0, dataCount),
+//#else
   Kokkos::parallel_for(
       "init-data", Kokkos::RangePolicy<Kokkos::Serial>(0, dataCount),
-#endif
+//#endif
       KOKKOS_LAMBDA(const int i) { data[i] = 10101010101; });
 
 #if defined(KOKKOS_HAVE_OPENMP)
