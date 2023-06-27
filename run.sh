@@ -16,7 +16,7 @@ let DS=$DATA_SIZE
 for datasize in $(seq 1 20); do
     for reps in $(seq 1 5); do
         #echo "$datasize,$reps,$DS"
-        ./$BENCHMARK 8192 $DS 7 1 | tee -a $BENCHMARK.res
+        ./$BENCHMARK 8192 $DS 7 1 | tee -a $BENCHMARK_atomic.res
     done
   let DS=$DS*2
 done

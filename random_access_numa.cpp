@@ -21,11 +21,11 @@
 
 #include <sys/time.h>
 
-#define HLINE "-------------------------------------------------------------\n"
-
 #if defined(KOKKOS_ENABLE_CUDA)
-using GUPSHostArray   = Kokkos::View<int64_t*, Kokkos::CudaSpace>::HostMirror;
-using GUPSDeviceArray = Kokkos::View<int64_t*, Kokkos::CudaSpace>;
+//using DefaultExecSpace = Kokkos::DefaultExecutionSpace;
+using DefaultExecSpace = Kokkos::DefaultHostExecutionSpace;
+using GUPSHostArray   = Kokkos::View<int64_t*, DefaultExecSpace>::HostMirror;
+using GUPSDeviceArray = Kokkos::View<int64_t*, DefaultExecSpace>;
 #else
 using GUPSHostArray   = Kokkos::View<int64_t*, Kokkos::HostSpace>::HostMirror;
 using GUPSDeviceArray = Kokkos::View<int64_t*, Kokkos::HostSpace>;
@@ -51,22 +51,17 @@ void run_gups(GUPSDeviceArray& indices, GUPSDeviceArray& data,
               const int64_t datum, const bool performAtomics, const int64_t num_teams,  const int64_t team_size, const int64_t vec_len) {
 
   auto policy =
-      Kokkos::TeamPolicy<>(num_teams, team_size, vec_len);
-  using team_t = Kokkos::TeamPolicy<>::member_type;
+      Kokkos::TeamPolicy<DefaultExecSpace>(num_teams, team_size, vec_len);
+  using team_t = Kokkos::TeamPolicy<DefaultExecSpace>::member_type;
 
   if (performAtomics) {
-//    Kokkos::parallel_for(
-//        "bench-gups-atomic",  indices.extent(0),
-//        KOKKOS_LAMBDA(const GUPSIndex i) {
-//          Kokkos::atomic_fetch_xor(&data[indices[i]], datum);
-//       });
-//
+
   const int64_t iters_per_team = indices.extent(0) / num_teams;
   const int64_t iters_per_thread= iters_per_team / team_size;
 
   Kokkos::parallel_for(
     "bench-gups-non-atomic", policy,
-    KOKKOS_LAMBDA(const Kokkos::TeamPolicy<>::member_type &team) {
+    KOKKOS_LAMBDA(const Kokkos::TeamPolicy<DefaultExecSpace>::member_type &team) {
       const int64_t first_i = team.league_rank() * iters_per_team;
       const int64_t last_i  = first_i + iters_per_team < indices.extent(0)
                                      ? first_i + iters_per_team
@@ -82,19 +77,14 @@ void run_gups(GUPSDeviceArray& indices, GUPSDeviceArray& data,
               });
           });
       });
-  } else {
-//    Kokkos::parallel_for(
-//      "bench-gups-non-atomic", indices.extent(0),
-//      KOKKOS_LAMBDA(const GUPSIndex i) { data[indices[i]] ^= datum; });
-//
-//        
+  } else {   
 
   const int64_t iters_per_team = indices.extent(0) / num_teams;
   const int64_t iters_per_thread= iters_per_team / team_size;
 
   Kokkos::parallel_for(
     "bench-gups-non-atomic", policy,
-    KOKKOS_LAMBDA(const Kokkos::TeamPolicy<>::member_type &team) {
+    KOKKOS_LAMBDA(const Kokkos::TeamPolicy<DefaultExecSpace>::member_type &team) {
       const int64_t first_i = team.league_rank() * iters_per_team;
       const int64_t last_i  = first_i + iters_per_team < indices.extent(0)
                                      ? first_i + iters_per_team
@@ -163,17 +153,6 @@ int run_benchmark(const GUPSIndex indicesCount, const GUPSIndex dataCount,
   Kokkos::deep_copy(indices, dev_indices);
   Kokkos::deep_copy(data, dev_data);
 
-//  printf(HLINE);
-//    printf("- Elements:      %15" PRIu64 " (%12.4f MB)\n",
-//         static_cast<uint64_t>(dataCount),
-//         1.0e-6 * ((double)dataCount * (double)sizeof(int64_t)));
-//  printf("- Indices:       %15" PRIu64 " (%12.4f MB)\n",
-//         static_cast<uint64_t>(indicesCount),
-//         1.0e-6 * ((double)indicesCount * (double)sizeof(int64_t)));
-//  printf(" - Atomics:      %15s\n", (useAtomics ? "Yes" : "No"));
-//  printf("Benchmark kernels will be performed for %d iterations.\n", repeats);
-//
-  // datacount, datasize, idxcount, idxsize, gups
   printf("Hopper,%lu,%lu,%lu,%lu,%.5f,%lu,%.5f,%s,%.10f\n",
       num_teams,
       team_size,
