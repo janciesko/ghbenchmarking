@@ -179,7 +179,7 @@ int main(int argc, char* argv[]) {
   int64_t vlen = 1;
   bool useAtomics = false;
   
-    indices = argc > 1 ? atoi(argv[1]) : indices;
+  indices = argc > 1 ? atoi(argv[1]) : indices;
   data = argc > 2 ? atoi(argv[2]):data;
   repeats = argc > 3 ? atoi (argv[3]):data;	  
   useAtomics = argc > 4 ? atoi (argv[4]):useAtomics;
