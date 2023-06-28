@@ -172,7 +172,7 @@ int main(int argc, char* argv[]) {
   Kokkos::initialize(argc, argv);
   
   int64_t indices = 8192;
-  int64_t data    = 33554432; //256MB
+  int64_t data    = 33554432;
   int64_t repeats = 10;
   int64_t nTeams  = 32;
   int64_t nThrPerTeam = 32;

@@ -23,7 +23,6 @@
 
 #if defined(KOKKOS_ENABLE_CUDA)
 using DefaultExecSpace = Kokkos::DefaultExecutionSpace;
-//using DefaultExecSpace = Kokkos::DefaultHostExecutionSpace;
 using GUPSHostArray   =Kokkos::View<int64_t*, Kokkos::HostSpace>::HostMirror;
 using GUPSHostArrayUmnged   =Kokkos::View<int64_t*, Kokkos::HostSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>>; //Kokkos::View<int64_t*, Kokkos::HostSpace>::HostMirror;
 using GUPSDeviceArray = Kokkos::View<int64_t*, DefaultExecSpace>;
@@ -112,7 +111,6 @@ int run_benchmark(const GUPSIndex indicesCount, const GUPSIndex dataCount,
 
 
   GUPSDeviceArray dev_indices("indices", indicesCount);
-  //GUPSDeviceArray dev_data("data", dataCount);
   int64_t * dev_data_ptr = (int64_t *) malloc (dataCount * sizeof(int64_t));
   if (dev_data_ptr == nullptr)
     printf("ERROR\n"); 
@@ -126,15 +124,13 @@ int run_benchmark(const GUPSIndex indicesCount, const GUPSIndex dataCount,
 
   double gupsTime = 0.0;
 
-//  printf("Initializing Views...\n");
-
-//#if defined(KOKKOS_HAVE_OPENMP)
-  //Kokkos::parallel_for(
-      //"init-data", Kokkos::RangePolicy<Kokkos::OpenMP>(0, dataCount),
-//#else
+#if defined(KOKKOS_HAVE_OPENMP)
+  Kokkos::parallel_for(
+      "init-data", Kokkos::RangePolicy<Kokkos::OpenMP>(0, dataCount),
+#else
   Kokkos::parallel_for(
       "init-data", Kokkos::RangePolicy<Kokkos::Serial>(0, dataCount),
-//#endif
+#endif
       KOKKOS_LAMBDA(const int i) { data[i] = 10101010101; });
 
 #if defined(KOKKOS_HAVE_OPENMP)

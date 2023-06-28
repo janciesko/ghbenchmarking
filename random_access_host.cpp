@@ -21,15 +21,10 @@
 
 #include <sys/time.h>
 
-#if defined(KOKKOS_ENABLE_CUDA)
-//using DefaultExecSpace = Kokkos::DefaultExecutionSpace;
+
 using DefaultExecSpace = Kokkos::DefaultHostExecutionSpace;
-using GUPSHostArray   = Kokkos::View<int64_t*, DefaultExecSpace>::HostMirror;
-using GUPSDeviceArray = Kokkos::View<int64_t*, DefaultExecSpace>;
-#else
 using GUPSHostArray   = Kokkos::View<int64_t*, Kokkos::HostSpace>::HostMirror;
 using GUPSDeviceArray = Kokkos::View<int64_t*, Kokkos::HostSpace>;
-#endif
 
 using GUPSIndex = int;
 
@@ -118,8 +113,6 @@ int run_benchmark(const GUPSIndex indicesCount, const GUPSIndex dataCount,
 
   double gupsTime = 0.0;
 
-//  printf("Initializing Views...\n");
-
 #if defined(KOKKOS_HAVE_OPENMP)
   Kokkos::parallel_for(
       "init-data", Kokkos::RangePolicy<Kokkos::OpenMP>(0, dataCount),
@@ -173,7 +166,7 @@ int main(int argc, char* argv[]) {
   Kokkos::initialize(argc, argv);
   
   int64_t indices = 8192;
-  int64_t data    = 33554432; //256MB
+  int64_t data    = 33554432;
   int64_t repeats = 10;
   int64_t nTeams  = 32;
   int64_t nThrPerTeam = 32;
