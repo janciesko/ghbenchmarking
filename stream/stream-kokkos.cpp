@@ -328,9 +328,9 @@ int main(int argc, char* argv[]) {
 
   array_size = argc > 1 ? atoi(argv[1]) : array_size;
   repetitions = argc > 2 ? atoi(argv[2]): repetitions;
-  ls = argc > 2 ? atoi(argv[3]): ls;
-  ts = argc > 2 ? atoi(argv[4]): ts;
-  vs = argc > 2 ? atoi(argv[5]): vs;
+  ls = argc > 3 ? atoi(argv[3]): ls;
+  ts = argc > 4 ? atoi(argv[4]): ts;
+  vs = argc > 5 ? atoi(argv[5]): vs;
 
   Kokkos::initialize(argc, argv);
   const int rc = run_benchmark(array_size, repetitions, ls, ts, vs);
